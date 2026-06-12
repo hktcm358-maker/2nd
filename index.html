@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ 英単語ハックマスター - 英検2級 ⚡</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .progress-bar {
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-blue-500/30">
+
+    <!-- APP HEADER -->
+    <header class="w-full glass-card border-b border-slate-800 px-4 py-3 sticky top-0 z-50 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <span class="text-xl">⚡</span>
+            <h1 class="text-base font-bold tracking-wider text-blue-400">HACK MASTER [英検2級]</h1>
+        </div>
+        <!-- Combo Indicator -->
+        <div id="header-combo" class="hidden bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black px-2.5 py-0.5 rounded-full text-xs tracking-wider animate-bounce">
+            🔥 <span id="header-combo-count">0</span> COMBO
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 w-full max-w-md mx-auto p-4 flex flex-col justify-start">
+
+        <!-- 1. HOME SCREEN -->
+        <div id="screen-home" class="space-y-6 w-full">
+            <div class="text-center py-2">
+                <p class="text-xs text-slate-400 uppercase tracking-widest">Target Acquired</p>
+                <h2 class="text-xl font-black text-slate-100 mt-1">パス単 英検2級 完全連動</h2>
+                <p class="text-xs text-emerald-400 mt-1">🌹 語源・イメージ・補足 100%同期済み</p>
+            </div>
+
+            <!-- Dashboard / Overview -->
+            <div class="glass-card rounded-2xl p-4 border border-blue-500/20 bg-gradient-to-br from-blue-950/30 to-slate-900/50">
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>総クリア率 (マスター済みの割合)</span>
+                    <span id="total-progress-percent" class="font-bold text-blue-400">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div id="total-progress-bar" class="progress-bar bg-gradient-to-r from-blue-500 to-indigo-500 h-full w-0"></div>
+                </div>
+            </div>
+
+            <!-- Section Lists -->
+            <div id="section-list" class="space-y-3.5 max-h-[60vh] overflow-y-auto pr-1">
+                <!-- Section cards injected here -->
+            </div>
+        </div>
+
+        <!-- 2. QUIZ SCREEN -->
+        <div id="screen-quiz" class="hidden space-y-4 w-full flex-1 flex flex-col justify-between">
+            
+            <div class="flex items-center justify-between">
+                <button id="btn-back" class="text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center space-x-1 py-1 px-2 rounded-lg bg-slate-800/50">
+                    <span>↩ 中断して戻る</span>
+                </button>
+                <div class="text-xs font-mono tracking-wider bg-slate-800/80 px-2.5 py-1 rounded-md text-slate-300">
+                    残り: <span id="quiz-count" class="font-bold text-blue-400">0</span>問
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                    <div id="quiz-progress-bar" class="progress-bar bg-blue-500 h-full w-0"></div>
+                </div>
+                <div class="flex justify-between items-center px-0.5">
+                    <span id="quiz-combo-badge" class="opacity-0 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30 transition-all">
+                        🔥 COMBO <span id="quiz-combo-count">0</span>
+                    </span>
+                    <span id="quiz-section-title" class="text-[10px] text-slate-500 uppercase tracking-wider font-bold"></span>
+                </div>
+            </div>
+
+            <!-- FLASH CARD CONTAINER -->
+            <div class="glass-card rounded-2xl p-5 border border-slate-700/60 bg-gradient-to-b from-slate-800/40 to-slate-900/60 flex-1 flex flex-col justify-between shadow-xl min-h-[350px]">
+                
+                <div class="space-y-3.5">
+                    <div class="space-y-1">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500 block">日本語意味・補足融合</span>
+                        <div class="text-slate-100 font-bold text-base leading-snug" id="quiz-hint-meaning"></div>
+                    </div>
+
+                    <div id="quiz-memory-booster" class="grid grid-cols-1 gap-2 pt-2 border-t border-slate-800 text-[11px]">
+                        <div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800/50">
+                            <span class="text-[9px] font-bold text-blue-400 block">💡 語源・イメージ感覚補足</span>
+                            <span id="quiz-boost-etymology" class="text-slate-300 font-medium whitespace-pre-line"></span>
+                        </div>
+                        <div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800/50" id="prep-box">
+                            <span class="text-[9px] font-bold text-indigo-400 block">🔗 熟語・前置詞イメージ</span>
+                            <span id="quiz-boost-preposition" class="text-slate-300 font-medium whitespace-pre-line"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="py-4 my-auto text-center">
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1">英語フレーズ（空欄をハックせよ）</p>
+                    <div id="quiz-phrase" class="text-base md:text-lg font-bold text-slate-100 leading-relaxed tracking-wide"></div>
+                </div>
+
+                <div id="quiz-answer-zone" class="invisible py-3 text-center border-t border-slate-800/60 bg-slate-950/20 rounded-xl space-y-2">
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-blue-400">正解単語</p>
+                    <div id="quiz-correct-word" class="text-2xl font-black tracking-wider text-emerald-400"></div>
+                    
+                    <div class="flex justify-center space-x-2 pt-1">
+                        <button id="btn-speak-word" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1 rounded-lg border border-slate-700 active:scale-95 transition-transform">🔊 単語</button>
+                        <button id="btn-speak-phrase" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1 rounded-lg border border-slate-700 active:scale-95 transition-transform">🔊 フレーズ</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- BUTTONS CONTROL PAD -->
+            <div class="w-full pt-1">
+                <button id="btn-reveal" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.99] transition-transform text-sm tracking-widest">
+                    👁 答えを見る
+                </button>
+
+                <div id="quiz-choice-pad" class="hidden grid grid-cols-2 gap-3.5">
+                    <button id="btn-wrong" class="bg-gradient-to-b from-rose-600 to-rose-700 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition-all text-center">
+                        ❌ 違った
+                    </button>
+                    <button id="btn-correct" class="bg-gradient-to-b from-emerald-600 to-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition-all text-center">
+                        ⭕ 合ってた
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="w-full text-center py-2 text-[10px] text-slate-600 border-t border-slate-900 bg-slate-950/40">
+        &copy; 2026 Word Hacker System [英検2級]
+    </footer>
+
+    <script>
+        const MASTER_DATA = [{"id": 1, "section": "Section 1 (2級)", "word": "let", "phrase": "My parents _____ me choose my own future.", "meaning": "Oに～させる", "note": "", "etymology": "", "preposition": ""}, {"id": 2, "section": "Section 1 (2級)", "word": "create", "phrase": "The artist _____ a beautiful poster for the event.", "meaning": "(を)つくり出す", "note": "", "etymology": "cre- は『生み出す・育てる』。creator / creature と同系で、無から形を作るイメージ。", "preposition": ""}, {"id": 3, "section": "Section 1 (2級)", "word": "cause", "phrase": "Heavy rain can _____ serious traffic problems.", "meaning": "を引き起こす", "note": "動詞は引き起こす、名詞は原因・大義。", "etymology": "cause は『原因・理由』から『引き起こす』へ。because の -cause とも感覚が近い。", "preposition": ""}, {"id": 4, "section": "Section 1 (2級)", "word": "increase", "phrase": "The number of foreign visitors _____ last year.", "meaning": "増加する", "note": "増える/増やす。名詞で『増加』としても使う。", "etymology": "in-（中へ/上へ強める）+ crease（成長する系）。量が内側から増していく感覚。", "preposition": ""}, {"id": 5, "section": "Section 1 (2級)", "word": "leave", "phrase": "Please _____ the door open for a while.", "meaning": "OをCのままにしておく", "note": "去るだけでなく、残す、〜のままにする、休暇の意味が重要。", "etymology": "", "preposition": ""}, {"id": 6, "section": "Section 1 (2級)", "word": "develop", "phrase": "The company _____ a new app for students.", "meaning": "を開発する", "note": "開発するだけでなく、発達する、発症する、写真を現像する。", "etymology": "de-（覆いを外す）+ envelop（包む）系。包まれたものが展開して現れるイメージ。", "preposition": ""}, {"id": 7, "section": "Section 1 (2級)", "word": "reduce", "phrase": "We should _____ food waste at home.", "meaning": "を減らす", "note": "", "etymology": "re-（後ろへ）+ duce（導く）。量を後ろへ引き下げる→減らす。", "preposition": ""}, {"id": 8, "section": "Section 1 (2級)", "word": "improve", "phrase": "Daily practice will _____ your English skills.", "meaning": "を進歩[向上]させる", "note": "", "etymology": "in/prove 系。価値・状態をより良い方向に『証明できる形へ』高める感覚。", "preposition": ""}, {"id": 9, "section": "Section 1 (2級)", "word": "produce", "phrase": "This factory _____ parts for electric cars.", "meaning": "(製品・農作物など)を作る", "note": "製品・農作物を生産する。名詞 produce は農産物。", "etymology": "pro-（前へ）+ duce（導く）。前に導き出す→生産する・生み出す。", "preposition": ""}, {"id": 10, "section": "Section 1 (2級)", "word": "agree", "phrase": "I _____ with your opinion about the plan.", "meaning": "意見が一致する", "note": "賛成するだけでなく、数値・意見が一致する、食べ物が体に合う意味もある。", "etymology": "a-（〜へ）+ gree（喜び・好意系）。気持ちが同じ方向へ合うイメージ。", "preposition": ""}, {"id": 11, "section": "Section 2 (2級)", "word": "tell", "phrase": "I can _____ from her face that she is tired.", "meaning": "がわかる", "note": "伝えるだけでなく、見分ける・判断できる、効果が現れる意味もある。", "etymology": "", "preposition": ""}, {"id": 12, "section": "Section 2 (2級)", "word": "allow", "phrase": "The museum _____ visitors to take photos.", "meaning": "を許す", "note": "許可するだけでなく、余地・時間・費用を見込む意味もある。", "etymology": "", "preposition": ""}, {"id": 13, "section": "Section 2 (2級)", "word": "prepare", "phrase": "We _____ dinner before the guests arrived.", "meaning": "(を)準備する", "note": "", "etymology": "pre-（前もって）+ pare（整える）。前段階で整えておく。", "preposition": ""}, {"id": 14, "section": "Section 2 (2級)", "word": "own", "phrase": "My aunt _____ a small bookstore near the station.", "meaning": "を所有している", "note": "", "etymology": "", "preposition": ""}, {"id": 15, "section": "Section 2 (2級)", "word": "check", "phrase": "Please _____ your answers before you submit the test.", "meaning": "(を)検査[点検]する", "note": "", "etymology": "", "preposition": ""}, {"id": 16, "section": "Section 2 (2級)", "word": "suggest", "phrase": "My teacher _____ a better way to study.", "meaning": "を提案する", "note": "", "etymology": "", "preposition": ""}, {"id": 17, "section": "Section 2 (2級)", "word": "cost", "phrase": "The new computer _____ more than I expected.", "meaning": "(費用)がかかる", "note": "", "etymology": "", "preposition": ""}, {"id": 18, "section": "Section 2 (2級)", "word": "meet", "phrase": "This design _____ all the safety requirements.", "meaning": "(要求・条件など)を満たす", "note": "", "etymology": "", "preposition": ""}, {"id": 19, "section": "Section 2 (2級)", "word": "provide", "phrase": "The website _____ useful information for travelers.", "meaning": "を提供[供給]する", "note": "", "etymology": "vid/vis は『見る』。video/visible/evidence など。", "preposition": ""}, {"id": 20, "section": "Section 2 (2級)", "word": "waste", "phrase": "Do not _____ your time on small worries.", "meaning": "を浪費する", "note": "", "etymology": "", "preposition": ""}, {"id": 21, "section": "Section 3 (2級)", "word": "protect", "phrase": "A helmet can _____ your head in an accident.", "meaning": "を保護する", "note": "", "etymology": "pro- は『前へ』。前に押し出す・支持する感覚もある。", "preposition": ""}, {"id": 22, "section": "Section 3 (2級)", "word": "offer", "phrase": "The company _____ him a new job.", "meaning": "を申し出る", "note": "", "etymology": "", "preposition": ""}, {"id": 23, "section": "Section 3 (2級)", "word": "describe", "phrase": "Can you _____ the man you saw?", "meaning": "(の特徴)を述べる", "note": "", "etymology": "scribe/script は『書く』。describe/inscription など。", "preposition": ""}, {"id": 24, "section": "Section 3 (2級)", "word": "damage", "phrase": "The storm _____ many houses along the coast.", "meaning": "に損傷[損害]を与える", "note": "", "etymology": "", "preposition": ""}, {"id": 25, "section": "Section 3 (2級)", "word": "disagree", "phrase": "I _____ with him on this point.", "meaning": "意見が食い違う", "note": "", "etymology": "dis- は『離す・反対・否定』。", "preposition": ""}, {"id": 26, "section": "Section 3 (2級)", "word": "recommend", "phrase": "I _____ this book to anyone studying English.", "meaning": "を推薦する", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 27, "section": "Section 3 (2級)", "word": "repair", "phrase": "Can you _____ this broken chair?", "meaning": "を修理する", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 28, "section": "Section 3 (2級)", "word": "share", "phrase": "The team decided to _____ something important.", "meaning": "を共有する", "note": "", "etymology": "", "preposition": ""}, {"id": 29, "section": "Section 3 (2級)", "word": "follow", "phrase": "The article discussed the topic of _____.", "meaning": "に続く", "note": "", "etymology": "", "preposition": ""}, {"id": 30, "section": "Section 3 (2級)", "word": "lead", "phrase": "It is _____ for students to ask questions.", "meaning": "つながる", "note": "", "etymology": "", "preposition": ""}, {"id": 31, "section": "Section 4 (2級)", "word": "attract", "phrase": "The main character learned to _____ through the experience.", "meaning": "(注意・興味など)を引く", "note": "", "etymology": "", "preposition": ""}, {"id": 32, "section": "Section 4 (2級)", "word": "encourage", "phrase": "My parents _____ me to try again.", "meaning": "を促す", "note": "", "etymology": "", "preposition": ""}, {"id": 33, "section": "Section 4 (2級)", "word": "support", "phrase": "The team decided to _____ something important.", "meaning": "を支持[支援]する", "note": "", "etymology": "port は『運ぶ』。import/export/transport/support の核。", "preposition": ""}, {"id": 34, "section": "Section 4 (2級)", "word": "raise", "phrase": "The main character learned to _____ through the experience.", "meaning": "(子ども)を育てる", "note": "", "etymology": "", "preposition": ""}, {"id": 35, "section": "Section 4 (2級)", "word": "hire", "phrase": "The team decided to _____ something important.", "meaning": "を雇う", "note": "", "etymology": "", "preposition": ""}, {"id": 36, "section": "Section 4 (2級)", "word": "charge", "phrase": "The main _____ learned to _____ through the experience.", "meaning": "(税金など)を課す", "note": "請求する、充電する、告発する、突撃する。文脈で大きく変わる多義語。", "etymology": "", "preposition": ""}, {"id": 37, "section": "Section 4 (2級)", "word": "care", "phrase": "The article discussed the topic of _____.", "meaning": "気にかける", "note": "", "etymology": "", "preposition": ""}, {"id": 38, "section": "Section 4 (2級)", "word": "book", "phrase": "We should _____ a room before the trip.", "meaning": "を予約する", "note": "", "etymology": "", "preposition": ""}, {"id": 39, "section": "Section 4 (2級)", "word": "store", "phrase": "The team decided to _____ something important.", "meaning": "を蓄える", "note": "", "etymology": "", "preposition": ""}, {"id": 40, "section": "Section 4 (2級)", "word": "train", "phrase": "The team decided to _____ something important.", "meaning": "を訓練する", "note": "", "etymology": "", "preposition": ""}, {"id": 41, "section": "Section 5 (2級)", "word": "last", "phrase": "The article discussed the topic of _____.", "meaning": "続く", "note": "『最後の』だけでなく、動詞で『続く・持ちこたえる』。", "etymology": "", "preposition": ""}, {"id": 42, "section": "Section 5 (2級)", "word": "park", "phrase": "The team decided to _____ something important.", "meaning": "を駐車する", "note": "", "etymology": "", "preposition": ""}, {"id": 43, "section": "Section 5 (2級)", "word": "run", "phrase": "The team decided to _____ something important.", "meaning": "を経営[運営]する", "note": "", "etymology": "", "preposition": ""}, {"id": 44, "section": "Section 5 (2級)", "word": "pay", "phrase": "The article discussed the topic of _____.", "meaning": "給料", "note": "", "etymology": "", "preposition": ""}, {"id": 45, "section": "Section 5 (2級)", "word": "brain", "phrase": "The article discussed the topic of _____.", "meaning": "頭脳", "note": "", "etymology": "", "preposition": ""}, {"id": 46, "section": "Section 5 (2級)", "word": "customer", "phrase": "The article discussed the topic of _____.", "meaning": "顧客", "note": "", "etymology": "", "preposition": ""}, {"id": 47, "section": "Section 5 (2級)", "word": "order", "phrase": "The article discussed the topic of _____.", "meaning": "順番", "note": "", "etymology": "", "preposition": ""}, {"id": 48, "section": "Section 5 (2級)", "word": "research", "phrase": "The article discussed the topic of _____.", "meaning": "調査", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 49, "section": "Section 5 (2級)", "word": "environment", "phrase": "The article discussed the topic of _____.", "meaning": "環境", "note": "", "etymology": "", "preposition": ""}, {"id": 50, "section": "Section 5 (2級)", "word": "result", "phrase": "The article discussed the topic of _____.", "meaning": "結果", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 51, "section": "Section 6 (2級)", "word": "amount", "phrase": "The article discussed the topic of _____.", "meaning": "量", "note": "", "etymology": "", "preposition": ""}, {"id": 52, "section": "Section 6 (2級)", "word": "situation", "phrase": "The article discussed the topic of _____.", "meaning": "状況", "note": "", "etymology": "", "preposition": ""}, {"id": 53, "section": "Section 6 (2級)", "word": "garbage", "phrase": "The article discussed the topic of _____.", "meaning": "ゴミ", "note": "", "etymology": "", "preposition": ""}, {"id": 54, "section": "Section 6 (2級)", "word": "device", "phrase": "The article discussed the topic of _____.", "meaning": "装置", "note": "", "etymology": "de- は『下へ・離れて・取り除く』。否定だけで覚えない。", "preposition": ""}, {"id": 55, "section": "Section 6 (2級)", "word": "exercise", "phrase": "The article discussed the topic of _____.", "meaning": "運動", "note": "", "etymology": "ex-/e- は『外へ』。内側から外へ出すイメージ。", "preposition": ""}, {"id": 56, "section": "Section 6 (2級)", "word": "skill", "phrase": "The article discussed the topic of _____.", "meaning": "技能", "note": "", "etymology": "", "preposition": ""}, {"id": 57, "section": "Section 6 (2級)", "word": "metal", "phrase": "The article discussed the topic of _____.", "meaning": "金属", "note": "", "etymology": "", "preposition": ""}, {"id": 58, "section": "Section 6 (2級)", "word": "electricity", "phrase": "The article discussed the topic of _____.", "meaning": "電気", "note": "", "etymology": "", "preposition": ""}, {"id": 59, "section": "Section 6 (2級)", "word": "traffic", "phrase": "The article discussed the topic of _____.", "meaning": "交通(量)", "note": "", "etymology": "", "preposition": ""}, {"id": 60, "section": "Section 6 (2級)", "word": "stress", "phrase": "The article discussed the topic of _____.", "meaning": "(心身への)ストレス", "note": "", "etymology": "", "preposition": ""}, {"id": 61, "section": "Section 7 (2級)", "word": "employee", "phrase": "The article discussed the topic of _____.", "meaning": "従業員", "note": "", "etymology": "", "preposition": ""}, {"id": 62, "section": "Section 7 (2級)", "word": "education", "phrase": "The article discussed the topic of _____.", "meaning": "教育", "note": "", "etymology": "", "preposition": ""}, {"id": 63, "section": "Section 7 (2級)", "word": "presentation", "phrase": "The article discussed the topic of _____.", "meaning": "発表", "note": "", "etymology": "pre- は『前もって・前に』。", "preposition": ""}, {"id": 64, "section": "Section 7 (2級)", "word": "design", "phrase": "The article discussed the topic of _____.", "meaning": "デザイン", "note": "", "etymology": "de- は『下へ・離れて・取り除く』。否定だけで覚えない。", "preposition": ""}, {"id": 65, "section": "Section 7 (2級)", "word": "experience", "phrase": "The article discussed the topic of _____.", "meaning": "経験", "note": "", "etymology": "ex-/e- は『外へ』。内側から外へ出すイメージ。", "preposition": ""}, {"id": 66, "section": "Section 7 (2級)", "word": "expert", "phrase": "The article discussed the topic of _____.", "meaning": "専門家", "note": "", "etymology": "ex-/e- は『外へ』。内側から外へ出すイメージ。", "preposition": ""}, {"id": 67, "section": "Section 7 (2級)", "word": "fact", "phrase": "The article discussed the topic of _____.", "meaning": "事実", "note": "", "etymology": "", "preposition": ""}, {"id": 68, "section": "Section 7 (2級)", "word": "staff", "phrase": "The article discussed the topic of _____.", "meaning": "スタッフ", "note": "", "etymology": "", "preposition": ""}, {"id": 69, "section": "Section 7 (2級)", "word": "fuel", "phrase": "The article discussed the topic of _____.", "meaning": "燃料", "note": "", "etymology": "fuel は『火にくべるもの』。比喩で不安・怒り・議論を燃え上がらせる。", "preposition": ""}, {"id": 70, "section": "Section 7 (2級)", "word": "tour", "phrase": "The article discussed the topic of _____.", "meaning": "見学", "note": "", "etymology": "", "preposition": ""}, {"id": 71, "section": "Section 8 (2級)", "word": "taste", "phrase": "The article discussed the topic of _____.", "meaning": "好み", "note": "", "etymology": "", "preposition": ""}, {"id": 72, "section": "Section 8 (2級)", "word": "benefit", "phrase": "The article discussed the topic of _____.", "meaning": "利益", "note": "", "etymology": "", "preposition": ""}, {"id": 73, "section": "Section 8 (2級)", "word": "practice", "phrase": "The article discussed the topic of _____.", "meaning": "実践", "note": "", "etymology": "", "preposition": ""}, {"id": 74, "section": "Section 8 (2級)", "word": "activity", "phrase": "The article discussed the topic of _____.", "meaning": "活動", "note": "", "etymology": "", "preposition": ""}, {"id": 75, "section": "Section 8 (2級)", "word": "subject", "phrase": "The article discussed the topic of _____.", "meaning": "話題", "note": "話題・科目・主語・被験者。be subject to で『〜を受けやすい／〜に従う』。", "etymology": "ject は『投げる』。project/reject/inject などは『投げる方向』で理解する。", "preposition": ""}, {"id": 76, "section": "Section 8 (2級)", "word": "professor", "phrase": "The article discussed the topic of _____.", "meaning": "教授", "note": "", "etymology": "pro- は『前へ』。前に押し出す・支持する感覚もある。", "preposition": ""}, {"id": 77, "section": "Section 8 (2級)", "word": "memory", "phrase": "The article discussed the topic of _____.", "meaning": "記憶(力)", "note": "", "etymology": "", "preposition": ""}, {"id": 78, "section": "Section 8 (2級)", "word": "effect", "phrase": "The article discussed the topic of _____.", "meaning": "影響", "note": "", "etymology": "", "preposition": ""}, {"id": 79, "section": "Section 8 (2級)", "word": "patient", "phrase": "The article discussed the topic of _____.", "meaning": "患者", "note": "", "etymology": "", "preposition": ""}, {"id": 80, "section": "Section 8 (2級)", "word": "project", "phrase": "It is _____ for students to ask questions.", "meaning": "(組織的)計画", "note": "企画・計画だけでなく、予測する、映し出す、突き出るという意味もある。", "etymology": "ject は『投げる』。project/reject/inject などは『投げる方向』で理解する。", "preposition": ""}, {"id": 81, "section": "Section 9 (2級)", "word": "article", "phrase": "The _____ discussed the topic of _____.", "meaning": "記事", "note": "", "etymology": "", "preposition": ""}, {"id": 82, "section": "Section 9 (2級)", "word": "material", "phrase": "The article discussed the topic of _____.", "meaning": "材料", "note": "", "etymology": "", "preposition": ""}, {"id": 83, "section": "Section 9 (2級)", "word": "bill", "phrase": "The article discussed the topic of _____.", "meaning": "請求書", "note": "", "etymology": "", "preposition": ""}, {"id": 84, "section": "Section 9 (2級)", "word": "technology", "phrase": "The article discussed the topic of _____.", "meaning": "科学技術", "note": "", "etymology": "log は『言葉・理屈』。dialogue/logic など。", "preposition": ""}, {"id": 85, "section": "Section 9 (2級)", "word": "security", "phrase": "It is _____ for students to ask questions.", "meaning": "安全", "note": "", "etymology": "cur/curs は『走る』。occur/current/course など。", "preposition": ""}, {"id": 86, "section": "Section 9 (2級)", "word": "discount", "phrase": "The article _____ the topic of _____.", "meaning": "割引", "note": "", "etymology": "dis- は『離す・反対・否定』。", "preposition": ""}, {"id": 87, "section": "Section 9 (2級)", "word": "review", "phrase": "The article discussed the topic of _____.", "meaning": "批評", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 88, "section": "Section 9 (2級)", "word": "flight", "phrase": "The article discussed the topic of _____.", "meaning": "定期航空便", "note": "", "etymology": "", "preposition": ""}, {"id": 89, "section": "Section 9 (2級)", "word": "smartphone", "phrase": "Students entered the room one after another. ( _____ )", "meaning": "スマートフォン", "note": "", "etymology": "phon は『音』。", "preposition": ""}, {"id": 90, "section": "Section 9 (2級)", "word": "supplement", "phrase": "The article discussed the topic of _____.", "meaning": "サプリメント", "note": "", "etymology": "", "preposition": ""}, {"id": 91, "section": "Section 10 (2級)", "word": "chemical", "phrase": "The article discussed the topic of _____.", "meaning": "化学の", "note": "", "etymology": "", "preposition": ""}, {"id": 92, "section": "Section 10 (2級)", "word": "ancient", "phrase": "The article discussed the topic of _____.", "meaning": "古代の", "note": "", "etymology": "", "preposition": ""}, {"id": 93, "section": "Section 10 (2級)", "word": "common", "phrase": "The article discussed the topic of _____.", "meaning": "共通の", "note": "", "etymology": "co-/com-/con- は『共に・一緒に』、または強調。", "preposition": ""}, {"id": 94, "section": "Section 10 (2級)", "word": "likely", "phrase": "She answered the question _____ and clearly.", "meaning": "〜しそうで", "note": "", "etymology": "", "preposition": ""}, {"id": 95, "section": "Section 10 (2級)", "word": "recently", "phrase": "She answered the question _____ and clearly.", "meaning": "最近", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 96, "section": "Section 10 (2級)", "word": "probably", "phrase": "She answered the question _____ and clearly.", "meaning": "たぶん", "note": "", "etymology": "pro- は『前へ』。前に押し出す・支持する感覚もある。", "preposition": ""}, {"id": 97, "section": "Section 10 (2級)", "word": "actually", "phrase": "She answered the question _____ and clearly.", "meaning": "実は", "note": "", "etymology": "", "preposition": ""}, {"id": 98, "section": "Section 10 (2級)", "word": "though", "phrase": "The article discussed the topic of _____.", "meaning": "…だけれども", "note": "", "etymology": "", "preposition": ""}, {"id": 99, "section": "Section 10 (2級)", "word": "while", "phrase": "The article discussed the topic of _____.", "meaning": "…している間に", "note": "", "etymology": "", "preposition": ""}, {"id": 100, "section": "Section 10 (2級)", "word": "whether", "phrase": "I do not know _____ he will join us tomorrow.", "meaning": "…かどうか", "note": "", "etymology": "", "preposition": ""}, {"id": 101, "section": "Section 11 (2級)", "word": "form", "phrase": "The students _____ a new study group.", "meaning": "を組織する", "note": "", "etymology": "", "preposition": ""}, {"id": 102, "section": "Section 11 (2級)", "word": "cancel", "phrase": "They _____ the outdoor concert because of the storm.", "meaning": "を取り消す", "note": "", "etymology": "", "preposition": ""}, {"id": 103, "section": "Section 11 (2級)", "word": "relax", "phrase": "I like to _____ by listening to music after school.", "meaning": "くつろぐ", "note": "", "etymology": "", "preposition": ""}, {"id": 104, "section": "Section 11 (2級)", "word": "add", "phrase": "_____ a little salt to the soup.", "meaning": "を加える", "note": "", "etymology": "", "preposition": ""}, {"id": 105, "section": "Section 11 (2級)", "word": "contact", "phrase": "Please _____ me if you have any questions.", "meaning": "と連絡を取る", "note": "", "etymology": "co-/com-/con- は『共に・一緒に』、または強調。", "preposition": ""}, {"id": 106, "section": "Section 11 (2級)", "word": "purchase", "phrase": "The school _____ new tablets for every class.", "meaning": "(高価な物・大量の物)を購入する", "note": "", "etymology": "古くは『追い求めて得る』感覚。単なる buy より正式・書き言葉寄り。", "preposition": ""}, {"id": 107, "section": "Section 11 (2級)", "word": "expect", "phrase": "We _____ the train to arrive on time.", "meaning": "を予期する", "note": "", "etymology": "ex-/e- は『外へ』。内側から外へ出すイメージ。", "preposition": ""}, {"id": 108, "section": "Section 11 (2級)", "word": "continue", "phrase": "She _____ studying even after dinner.", "meaning": "を続ける", "note": "", "etymology": "co-/com-/con- は『共に・一緒に』、または強調。", "preposition": ""}, {"id": 109, "section": "Section 11 (2級)", "word": "require", "phrase": "This job _____ good communication skills.", "meaning": "を要求する", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 110, "section": "Section 11 (2級)", "word": "replace", "phrase": "We _____ the old printer with a new one.", "meaning": "を取り替える", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 111, "section": "Section 12 (2級)", "word": "suffer", "phrase": "Many people _____ during the long drought.", "meaning": "苦しむ", "note": "", "etymology": "fer は『運ぶ』。transfer/refer/confer などで使われる。", "preposition": ""}, {"id": 112, "section": "Section 12 (2級)", "word": "fix", "phrase": "My brother _____ my bicycle yesterday.", "meaning": "を修理する", "note": "", "etymology": "", "preposition": ""}, {"id": 113, "section": "Section 12 (2級)", "word": "serve", "phrase": "This restaurant _____ fresh fish every day.", "meaning": "(に)食事を出す", "note": "", "etymology": "", "preposition": ""}, {"id": 114, "section": "Section 12 (2級)", "word": "include", "phrase": "The price _____ breakfast and a guided tour.", "meaning": "を含む", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 115, "section": "Section 12 (2級)", "word": "attend", "phrase": "The main character learned to _____ through the experience.", "meaning": "に出席する", "note": "", "etymology": "ten/tain は『保つ・持つ』。", "preposition": ""}, {"id": 116, "section": "Section 12 (2級)", "word": "quit", "phrase": "The team decided to _____ something important.", "meaning": "をやめる", "note": "", "etymology": "", "preposition": ""}, {"id": 117, "section": "Section 12 (2級)", "word": "prefer", "phrase": "I _____ tea to coffee.", "meaning": "の方を好む", "note": "", "etymology": "fer は『運ぶ』。transfer/refer/confer などで使われる。", "preposition": ""}, {"id": 118, "section": "Section 12 (2級)", "word": "recycle", "phrase": "The team decided to _____ something important.", "meaning": "(を)再生利用する", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 119, "section": "Section 12 (2級)", "word": "face", "phrase": "The main character learned to _____ through the experience.", "meaning": "に直面する", "note": "", "etymology": "", "preposition": ""}, {"id": 120, "section": "Section 12 (2級)", "word": "invent", "phrase": "The team decided to _____ something important.", "meaning": "を発明する", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 121, "section": "Section 13 (2級)", "word": "prevent", "phrase": "The fence _____ children from entering the river.", "meaning": "を防ぐ", "note": "", "etymology": "pre- は『前もって・前に』。", "preposition": ""}, {"id": 122, "section": "Section 13 (2級)", "word": "decrease", "phrase": "We can _____ waste by reusing old materials.", "meaning": "を減らす", "note": "", "etymology": "de- は『下へ・離れて・取り除く』。否定だけで覚えない。", "preposition": ""}, {"id": 123, "section": "Section 13 (2級)", "word": "attach", "phrase": "The team decided to _____ something important.", "meaning": "を添付する", "note": "", "etymology": "", "preposition": ""}, {"id": 124, "section": "Section 13 (2級)", "word": "shape", "phrase": "The students tried to _____ something useful.", "meaning": "を形作る", "note": "", "etymology": "", "preposition": ""}, {"id": 125, "section": "Section 13 (2級)", "word": "fill", "phrase": "The team decided to _____ something important.", "meaning": "を満たす", "note": "", "etymology": "", "preposition": ""}, {"id": 126, "section": "Section 13 (2級)", "word": "exchange", "phrase": "The team decided to _____ something important.", "meaning": "を交換し合う", "note": "", "etymology": "ex-/e- は『外へ』。内側から外へ出すイメージ。", "preposition": ""}, {"id": 127, "section": "Section 13 (2級)", "word": "realize", "phrase": "The article discussed the topic of _____.", "meaning": "に気づく", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 128, "section": "Section 13 (2級)", "word": "lower", "phrase": "The team decided to _____ something important.", "meaning": "を下げる", "note": "", "etymology": "", "preposition": ""}, {"id": 129, "section": "Section 13 (2級)", "word": "guess", "phrase": "_____ are important in modern society.", "meaning": "だと思う", "note": "", "etymology": "", "preposition": ""}, {"id": 130, "section": "Section 13 (2級)", "word": "gain", "phrase": "The team decided to _____ something important.", "meaning": "を得る", "note": "", "etymology": "", "preposition": ""}, {"id": 131, "section": "Section 14 (2級)", "word": "suit", "phrase": "The article discussed the topic of _____.", "meaning": "に似合う", "note": "", "etymology": "", "preposition": ""}, {"id": 132, "section": "Section 14 (2級)", "word": "land", "phrase": "The main character learned to _____ through the experience.", "meaning": "着陸する", "note": "", "etymology": "", "preposition": ""}, {"id": 133, "section": "Section 14 (2級)", "word": "award", "phrase": "The main character learned to _____ through the experience.", "meaning": "AにB(賞など)を与える", "note": "", "etymology": "", "preposition": ""}, {"id": 134, "section": "Section 14 (2級)", "word": "statement", "phrase": "The article discussed the topic of _____.", "meaning": "陣述", "note": "", "etymology": "", "preposition": ""}, {"id": 135, "section": "Section 14 (2級)", "word": "insect", "phrase": "The article discussed the topic of _____.", "meaning": "虫", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 136, "section": "Section 14 (2級)", "word": "department", "phrase": "The article discussed the topic of _____.", "meaning": "部門", "note": "", "etymology": "de- は『下へ・離れて・取り除く』。否定だけで覚えない。", "preposition": ""}, {"id": 137, "section": "Section 14 (2級)", "word": "membership", "phrase": "The article discussed the topic of _____.", "meaning": "会員資格", "note": "", "etymology": "", "preposition": ""}, {"id": 138, "section": "Section 14 (2級)", "word": "fat", "phrase": "The article discussed the topic of _____.", "meaning": "脂肪", "note": "", "etymology": "", "preposition": ""}, {"id": 139, "section": "Section 14 (2級)", "word": "sentence", "phrase": "The article discussed the topic of _____.", "meaning": "文", "note": "文だけでなく、判決・刑。動詞で判決を下す。", "etymology": "ten/tain は『保つ・持つ』。", "preposition": ""}, {"id": 140, "section": "Section 14 (2級)", "word": "community", "phrase": "The article discussed the topic of _____.", "meaning": "地域社会", "note": "", "etymology": "co-/com-/con- は『共に・一緒に』、または強調。", "preposition": ""}, {"id": 141, "section": "Section 15 (2級)", "word": "instrument", "phrase": "The article discussed the topic of _____.", "meaning": "機器", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 142, "section": "Section 15 (2級)", "word": "focus", "phrase": "_____ are important in modern society.", "meaning": "焦点", "note": "", "etymology": "", "preposition": ""}, {"id": 143, "section": "Section 15 (2級)", "word": "client", "phrase": "The article discussed the topic of _____.", "meaning": "顧客", "note": "", "etymology": "", "preposition": ""}, {"id": 144, "section": "Section 15 (2級)", "word": "bacteria", "phrase": "The article discussed the topic of _____.", "meaning": "細菌", "note": "", "etymology": "", "preposition": ""}, {"id": 145, "section": "Section 15 (2級)", "word": "retirement", "phrase": "The article discussed the topic of _____.", "meaning": "(定年による)退職", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 146, "section": "Section 15 (2級)", "word": "nature", "phrase": "The article discussed the topic of _____.", "meaning": "性質", "note": "", "etymology": "", "preposition": ""}, {"id": 147, "section": "Section 15 (2級)", "word": "earth", "phrase": "The article discussed the topic of _____.", "meaning": "地球", "note": "", "etymology": "", "preposition": ""}, {"id": 148, "section": "Section 15 (2級)", "word": "grocery", "phrase": "The article discussed the topic of _____.", "meaning": "食料雑貨店", "note": "", "etymology": "", "preposition": ""}, {"id": 149, "section": "Section 15 (2級)", "word": "trash", "phrase": "The article discussed the topic of _____.", "meaning": "ゴミ", "note": "", "etymology": "", "preposition": ""}, {"id": 150, "section": "Section 15 (2級)", "word": "method", "phrase": "This _____ helped me remember new words.", "meaning": "(研究・調査などの)方法", "note": "", "etymology": "", "preposition": ""}, {"id": 151, "section": "Section 16 (2級)", "word": "site", "phrase": "The article discussed the topic of _____.", "meaning": "場所", "note": "", "etymology": "", "preposition": ""}, {"id": 152, "section": "Section 16 (2級)", "word": "tablet", "phrase": "The article discussed the topic of _____.", "meaning": "タブレット", "note": "", "etymology": "", "preposition": ""}, {"id": 153, "section": "Section 16 (2級)", "word": "organization", "phrase": "The article discussed the topic of _____.", "meaning": "組織", "note": "", "etymology": "", "preposition": ""}, {"id": 154, "section": "Section 16 (2級)", "word": "treatment", "phrase": "The article discussed the topic of _____.", "meaning": "治療", "note": "", "etymology": "", "preposition": ""}, {"id": 155, "section": "Section 16 (2級)", "word": "farming", "phrase": "The article discussed the topic of _____.", "meaning": "農業", "note": "", "etymology": "min は『小さい』。minor/minimize など。", "preposition": ""}, {"id": 156, "section": "Section 16 (2級)", "word": "case", "phrase": "The article discussed the topic of _____.", "meaning": "場合", "note": "", "etymology": "", "preposition": ""}, {"id": 157, "section": "Section 16 (2級)", "word": "announcement", "phrase": "The article discussed the topic of _____.", "meaning": "アナウンス", "note": "", "etymology": "", "preposition": ""}, {"id": 158, "section": "Section 16 (2級)", "word": "author", "phrase": "The article discussed the topic of _____.", "meaning": "著者", "note": "", "etymology": "", "preposition": ""}, {"id": 159, "section": "Section 16 (2級)", "word": "biology", "phrase": "The article discussed the topic of _____.", "meaning": "生物学", "note": "", "etymology": "log は『言葉・理屈』。dialogue/logic など。", "preposition": ""}, {"id": 160, "section": "Section 16 (2級)", "word": "advertisement", "phrase": "The article discussed the topic of _____.", "meaning": "広告", "note": "", "etymology": "", "preposition": ""}, {"id": 161, "section": "Section 17 (2級)", "word": "account", "phrase": "The article discussed the topic of _____.", "meaning": "口座", "note": "口座、説明、記述、割合。account for で『説明する／占める』。", "etymology": "", "preposition": ""}, {"id": 162, "section": "Section 17 (2級)", "word": "data", "phrase": "The article discussed the topic of _____.", "meaning": "データ", "note": "", "etymology": "", "preposition": ""}, {"id": 163, "section": "Section 17 (2級)", "word": "solution", "phrase": "The article discussed the topic of _____.", "meaning": "解決(策)", "note": "", "etymology": "", "preposition": ""}, {"id": 164, "section": "Section 17 (2級)", "word": "harm", "phrase": "The article discussed the topic of _____.", "meaning": "害", "note": "", "etymology": "", "preposition": ""}, {"id": 165, "section": "Section 17 (2級)", "word": "competition", "phrase": "The article discussed the topic of _____.", "meaning": "競技(会)", "note": "", "etymology": "co-/com-/con- は『共に・一緒に』、または強調。", "preposition": ""}, {"id": 166, "section": "Section 17 (2級)", "word": "industry", "phrase": "The article discussed the topic of _____.", "meaning": "産業", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 167, "section": "Section 17 (2級)", "word": "participant", "phrase": "I want to _____ in the volunteer program.", "meaning": "参加者", "note": "", "etymology": "", "preposition": ""}, {"id": 168, "section": "Section 17 (2級)", "word": "charity", "phrase": "The article discussed the topic of _____.", "meaning": "慈善(事業)", "note": "", "etymology": "", "preposition": ""}, {"id": 169, "section": "Section 17 (2級)", "word": "medicine", "phrase": "The article discussed the topic of _____.", "meaning": "薬", "note": "", "etymology": "", "preposition": ""}, {"id": 170, "section": "Section 17 (2級)", "word": "opinion", "phrase": "The article discussed the topic of _____.", "meaning": "意見", "note": "", "etymology": "", "preposition": ""}, {"id": 171, "section": "Section 18 (2級)", "word": "payment", "phrase": "The article discussed the topic of _____.", "meaning": "支払い", "note": "", "etymology": "", "preposition": ""}, {"id": 172, "section": "Section 18 (2級)", "word": "population", "phrase": "The article discussed the topic of _____.", "meaning": "人口", "note": "", "etymology": "", "preposition": ""}, {"id": 173, "section": "Section 18 (2級)", "word": "access", "phrase": "_____ are important in modern society.", "meaning": "入手方法", "note": "", "etymology": "", "preposition": ""}, {"id": 174, "section": "Section 18 (2級)", "word": "generation", "phrase": "The article discussed the topic of _____.", "meaning": "(同)世代", "note": "", "etymology": "", "preposition": ""}, {"id": 175, "section": "Section 18 (2級)", "word": "resident", "phrase": "The article discussed the topic of _____.", "meaning": "居住者", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 176, "section": "Section 18 (2級)", "word": "quality", "phrase": "The article discussed the topic of _____.", "meaning": "質", "note": "", "etymology": "", "preposition": ""}, {"id": 177, "section": "Section 18 (2級)", "word": "distance", "phrase": "The article discussed the topic of _____.", "meaning": "距離", "note": "", "etymology": "dis- は『離す・反対・否定』。", "preposition": ""}, {"id": 178, "section": "Section 18 (2級)", "word": "variety", "phrase": "The article discussed the topic of _____.", "meaning": "種類", "note": "", "etymology": "", "preposition": ""}, {"id": 179, "section": "Section 18 (2級)", "word": "career", "phrase": "The article discussed the topic of _____.", "meaning": "職業", "note": "", "etymology": "", "preposition": ""}, {"id": 180, "section": "Section 18 (2級)", "word": "item", "phrase": "The article discussed the topic of _____.", "meaning": "品目", "note": "", "etymology": "", "preposition": ""}];
+        const storageKey = 'hacker_wrong_list_2kyu';
+        let wrongList = JSON.parse(localStorage.getItem(storageKey)) || [];
+        let currentCombo = 0;
+
+        let currentSection = "";
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let isWrongOnlyMode = false;
+
+        const SECTIONS = [...new Set(MASTER_DATA.map(item => item.section))];
+
+        const domHome = document.getElementById('screen-home');
+        const domQuiz = document.getElementById('screen-quiz');
+        const domSectionList = document.getElementById('section-list');
+        const domTotalProgressPercent = document.getElementById('total-progress-percent');
+        const domTotalProgressBar = document.getElementById('total-progress-bar');
+        
+        const domQuizCount = document.getElementById('quiz-count');
+        const domQuizProgressBar = document.getElementById('quiz-progress-bar');
+        const domQuizComboBadge = document.getElementById('quiz-combo-badge');
+        const domQuizComboCount = document.getElementById('quiz-combo-count');
+        const domHeaderCombo = document.getElementById('header-combo');
+        const domHeaderComboCount = document.getElementById('header-combo-count');
+        const domQuizSectionTitle = document.getElementById('quiz-section-title');
+
+        const domHintMeaning = document.getElementById('quiz-hint-meaning');
+        const domBoostEtymology = document.getElementById('quiz-boost-etymology');
+        const domBoostPreposition = document.getElementById('quiz-boost-preposition');
+        const domPhrase = document.getElementById('quiz-phrase');
+        const domAnswerZone = document.getElementById('quiz-answer-zone');
+        const domCorrectWord = document.getElementById('quiz-correct-word');
+
+        const domBtnReveal = document.getElementById('btn-reveal');
+        const domBtnChoicePad = document.getElementById('quiz-choice-pad');
+        const domBtnWrong = document.getElementById('btn-wrong');
+        const domBtnCorrect = document.getElementById('btn-correct');
+        const domBtnBack = document.getElementById('btn-back');
+        const domBtnSpeakWord = document.getElementById('btn-speak-word');
+        const domBtnSpeakPhrase = document.getElementById('btn-speak-phrase');
+
+        function renderHome() {
+            domSectionList.innerHTML = "";
+            let totalItems = MASTER_DATA.length;
+            let totalMastered = totalItems - wrongList.length;
+            
+            let globalPercent = totalItems > 0 ? Math.round((totalMastered / totalItems) * 100) : 0;
+            domTotalProgressPercent.innerText = globalPercent + "%";
+            domTotalProgressBar.style.width = globalPercent + "%";
+
+            SECTIONS.forEach(secName => {
+                const secItems = MASTER_DATA.filter(item => item.section === secName);
+                const secWrongItems = secItems.filter(item => wrongList.includes(item.id));
+                const wrongCount = secWrongItems.length;
+
+                let statusBadge = `<span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded font-bold">進行中</span>`;
+                if (wrongCount === 0) {
+                    statusBadge = `<span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold">CLEAR ✨</span>`;
+                } else if (wrongCount > 0) {
+                    statusBadge = `<span class="bg-rose-500/20 text-rose-400 text-[10px] px-2 py-0.5 rounded font-bold font-mono">苦手: ${wrongCount}問</span>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = "glass-card rounded-xl p-4 border border-slate-800 flex flex-col justify-between space-y-2.5";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold text-slate-200">${secName}</h3>
+                        ${statusBadge}
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                        <button onclick="startQuiz('${secName}', false)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-center">解く</button>
+                        <button onclick="startQuiz('${secName}', true)" ${wrongCount === 0 ? 'disabled class="bg-slate-800 text-slate-600 font-bold py-2 rounded-lg text-center cursor-not-allowed"' : 'class="bg-rose-600/80 hover:bg-rose-600 text-white font-bold py-2 rounded-lg text-center"'} >苦手のみ</button>
+                        <button onclick="resetSectionProgress('${secName}')" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium py-2 rounded-lg text-center text-[11px]">リセット</button>
+                    </div>
+                `;
+                domSectionList.appendChild(card);
+            });
+
+            if (currentCombo > 0) {
+                domHeaderCombo.classList.remove('hidden');
+                domHeaderComboCount.innerText = currentCombo;
+            } else {
+                domHeaderCombo.classList.add('hidden');
+            }
+        }
+
+        function startQuiz(sectionName, wrongOnly) {
+            currentSection = sectionName;
+            isWrongOnlyMode = wrongOnly;
+            
+            let source = MASTER_DATA.filter(item => item.section === sectionName);
+            if (wrongOnly) {
+                source = source.filter(item => wrongList.includes(item.id));
+            }
+
+            if (source.length === 0) {
+                alert("対象の問題がありません。");
+                return;
+            }
+
+            currentQuestions = [...source].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+
+            domHome.classList.add('hidden');
+            domQuiz.classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            domBtnReveal.classList.remove('hidden');
+            domBtnChoicePad.classList.add('hidden');
+            domAnswerZone.classList.add('invisible');
+
+            if (currentIndex >= currentQuestions.length) {
+                alert(`セクション完了！現在のコンボ: ${currentCombo} 連勝！`);
+                exitQuiz();
+                return;
+            }
+
+            const currentItem = currentQuestions[currentIndex];
+
+            domQuizCount.innerText = (currentQuestions.length - currentIndex);
+            domQuizSectionTitle.innerText = currentItem.section;
+            let progressRatio = (currentIndex / currentQuestions.length) * 100;
+            domQuizProgressBar.style.width = progressRatio + "%";
+
+            let fullNote = currentItem.note ? `<div class="text-slate-400 text-xs font-normal mt-1 bg-slate-950/40 p-2 rounded border border-slate-800/80">${currentItem.note}</div>` : '';
+            domHintMeaning.innerHTML = `<div>${currentItem.meaning}</div>${fullNote}`;
+            
+            domBoostEtymology.innerText = currentItem.etymology || "なし";
+            domBoostPreposition.innerText = currentItem.preposition || "なし";
+
+            domPhrase.innerText = currentItem.phrase;
+            domCorrectWord.innerText = currentItem.word;
+
+            if (currentCombo >= 3) {
+                domQuizComboBadge.classList.remove('opacity-0');
+                domQuizComboCount.innerText = currentCombo;
+            } else {
+                domQuizComboBadge.classList.add('opacity-0');
+            }
+        }
+
+        function revealAnswer() {
+            domBtnReveal.classList.add('hidden');
+            domBtnChoicePad.classList.remove('hidden');
+            domAnswerZone.classList.remove('invisible');
+
+            const currentItem = currentQuestions[currentIndex];
+            let rawPhrase = currentItem.phrase;
+            let targetWord = currentItem.word;
+
+            if (rawPhrase.trim().startsWith("_____")) {
+                targetWord = targetWord.charAt(0).toUpperCase() + targetWord.slice(1);
+            } else {
+                targetWord = targetWord.toLowerCase();
+            }
+            domCorrectWord.innerText = targetWord;
+            speak(targetWord, 1.0);
+        }
+
+        function handleUserJudgment(isCorrect) {
+            const currentItem = currentQuestions[currentIndex];
+
+            if (isCorrect) {
+                wrongList = wrongList.filter(id => id !== currentItem.id);
+                currentCombo++;
+            } else {
+                if (!wrongList.includes(currentItem.id)) {
+                    wrongList.push(currentItem.id);
+                }
+                currentCombo = 0;
+            }
+
+            localStorage.setItem(storageKey, JSON.stringify(wrongList));
+            currentIndex++;
+            showQuestion();
+        }
+
+        function exitQuiz() {
+            domQuiz.classList.add('hidden');
+            domHome.classList.remove('hidden');
+            renderHome();
+        }
+
+        function resetSectionProgress(sectionName) {
+            if (confirm(`${sectionName} の苦手記録をクリアしますか？`)) {
+                const targetIds = MASTER_DATA.filter(item => item.section === sectionName).map(item => item.id);
+                wrongList = wrongList.filter(id => !targetIds.includes(id));
+                localStorage.setItem(storageKey, JSON.stringify(wrongList));
+                renderHome();
+            }
+        }
+
+        function speak(text, speed = 1.0) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let cleanText = text.replace(/_____/g, "blank");
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'en-US';
+                utterance.rate = speed;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        domBtnReveal.addEventListener('click', revealAnswer);
+        domBtnCorrect.addEventListener('click', () => handleUserJudgment(true));
+        domBtnWrong.addEventListener('click', () => handleUserJudgment(false));
+        domBtnBack.addEventListener('click', () => exitQuiz());
+        domBtnSpeakWord.addEventListener('click', () => speak(currentQuestions[currentIndex].word, 1.0));
+        domBtnSpeakPhrase.addEventListener('click', () => speak(currentQuestions[currentIndex].phrase, 0.95));
+
+        renderHome();
+    </script>
+</body>
+</html>
