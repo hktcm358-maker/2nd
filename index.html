@@ -299,7 +299,6 @@
                 .replace(/…/g, " ")
                 .replace(/[（）]/g, " ")
                 .replace(/\([^)]*\)/g, " ")
-                .replace(/\[[^\]]*\]/g, " ")
                 .replace(/[･・]/g, " ")
                 .replace(/\s+/g, " ")
                 .trim();
@@ -341,7 +340,10 @@
                 "teach": ["teach", "teaches", "taught", "teaching"],
                 "tell": ["tell", "tells", "told", "telling"],
                 "think": ["think", "thinks", "thought", "thinking"],
-                "understand": ["understand", "understands", "understood", "understanding"]
+                "understand": ["understand", "understands", "understood", "understanding"],
+                "provide": ["provide", "provides", "provided", "providing"],
+                "begin": ["begin", "begins", "began", "begun", "beginning"],
+                "wear": ["wear", "wears", "wore", "worn", "wearing"]
             };
 
             const b = String(base || "").toLowerCase();
@@ -356,7 +358,7 @@
                 forms.add(b.slice(0, -1) + "ies");
                 forms.add(b.slice(0, -1) + "ied");
                 forms.add(b + "ing");
-            } else {
+            } else if (/^[a-z]+$/.test(b)) {
                 forms.add(b + "s");
                 forms.add(b + "ed");
                 forms.add(b + "ing");
@@ -364,47 +366,88 @@
             return Array.from(forms);
         }
 
+        function tokenizeTargetExpression(targetWord) {
+            let text = String(targetWord || "").toLowerCase();
+            text = text
+                .replace(/[‘’]/g, "'")
+                .replace(/[~〜]/g, " OBJ ")
+                .replace(/…/g, " CLAUSE ")
+                .replace(/[（）]/g, " ")
+                .replace(/\([^)]*\)/g, " ")
+                .replace(/\[([^\]]+)\]/g, " $1 ")
+                .replace(/[･・]/g, " ")
+                .replace(/one's/g, " POSS ")
+                .replace(/\bone\s+s\b/g, " POSS ")
+                .replace(/\b(a|b|c|o)\b/g, " OBJ ")
+                .replace(/\bdoing\b/g, " GERUND ")
+                .replace(/\bdo\b/g, " VERB ")
+                .replace(/\s+/g, " ")
+                .trim();
+            return text ? text.split(/\s+/).filter(Boolean) : [];
+        }
+
+        function tokenToPattern(token, index, total) {
+            if (!token) return "";
+            const t = token.toLowerCase();
+
+            if (t === "obj") return "(?:[a-z]+(?:\\s+[a-z]+){0,5})";
+            if (t === "clause") return "(?:[a-z]+(?:\\s+[a-z]+){0,8})";
+            if (t === "poss") return "(?:my|your|his|her|its|our|their|one's|one’s)";
+            if (t === "gerund") return "(?:[a-z]+ing(?:\\s+[a-z]+){0,5})";
+            if (t === "verb") return "(?:[a-z]+(?:s|ed|ing)?(?:\\s+[a-z]+){0,5})";
+
+            if (t === "be") return `(?:${getVerbForms("be").map(escapeRegExp).join("|")})`;
+
+            const forms = getVerbForms(t).map(escapeRegExp);
+            if (index === 0 && /^[a-z]+$/.test(t)) return `(?:${forms.join("|")})`;
+            return escapeRegExp(t);
+        }
+
+        function buildPatternFromTokens(tokens) {
+            const cleaned = tokens.filter(Boolean);
+            if (cleaned.length === 0) return null;
+            const parts = cleaned.map((tok, i) => tokenToPattern(tok, i, cleaned.length));
+            if (parts.some(p => !p)) return null;
+            return `\\b${parts.join("\\s+")}\\b`;
+        }
+
         function buildTargetRegex(targetWord) {
             const normalized = normalizeTargetExpression(targetWord);
             if (!normalized) return null;
 
-            const candidates = new Set([normalized]);
+            const patterns = [];
+            const tokenSets = [];
+            const baseTokens = tokenizeTargetExpression(targetWord);
+            if (baseTokens.length) tokenSets.push(baseTokens);
 
-            if (/^be\s+/i.test(normalized)) {
-                candidates.add(normalized.replace(/^be\s+/i, ""));
-            }
+            // be tired of などは be を落とした形も試す
+            if (baseTokens[0] === "be" && baseTokens.length >= 2) tokenSets.push(baseTokens.slice(1));
 
+            // [near] / ( ) / A/B/one's を除いた素直な形も試す
             const cleaned = normalized
+                .replace(/[‘’]/g, "'")
+                .replace(/one's|one’s/gi, " ")
                 .replace(/\b[A-Z]\b/g, " ")
+                .replace(/\bdoing\b/gi, " ")
+                .replace(/\bdo\b/gi, " ")
                 .replace(/\s+/g, " ")
                 .trim();
-            if (cleaned) candidates.add(cleaned);
+            if (cleaned) tokenSets.push(cleaned.toLowerCase().split(/\s+/));
 
-            const patterns = [];
-
-            candidates.forEach(candidate => {
-                const words = candidate.split(/\s+/).filter(Boolean);
-                if (words.length === 0) return;
-
-                const first = words[0].toLowerCase();
-
-                if (first === "be" && words.length >= 2) {
-                    const rest = words.slice(1).map(escapeRegExp).join("\\s+");
-                    patterns.push(`\\b(?:${getVerbForms("be").map(escapeRegExp).join("|")})\\s+${rest}\\b`);
-                    return;
-                }
-
-                const firstPattern = `(?:${getVerbForms(first).map(escapeRegExp).join("|")})`;
-                const restPattern = words.slice(1).map(escapeRegExp).join("\\s+");
-
-                if (words.length >= 2) {
-                    patterns.push(`\\b${firstPattern}\\s+${restPattern}\\b`);
-                    patterns.push(`\\b${words.map(escapeRegExp).join("\\s+")}\\b`);
-                } else {
-                    patterns.push(`\\b${firstPattern}\\b`);
-                    patterns.push(`\\b${escapeRegExp(words[0])}[a-z]*\\b`);
-                }
+            tokenSets.forEach(tokens => {
+                const p = buildPatternFromTokens(tokens);
+                if (p) patterns.push(p);
             });
+
+            // provided that の例文が provides A with B になっているデータ揺れ対策
+            if (/^provided\s+that\b/i.test(normalized)) {
+                patterns.push(`\\b(?:${getVerbForms("provide").map(escapeRegExp).join("|")})(?:\\s+[a-z]+){0,4}\\s+with\\b`);
+            }
+
+            // 単語1語だけの問題は活用形も確実に拾う
+            if (baseTokens.length === 1 && /^[a-z]+$/.test(baseTokens[0])) {
+                patterns.push(`\\b(?:${getVerbForms(baseTokens[0]).map(escapeRegExp).join("|")})\\b`);
+            }
 
             const uniquePatterns = Array.from(new Set(patterns)).sort((a, b) => b.length - a.length);
             if (uniquePatterns.length === 0) return null;
@@ -425,16 +468,6 @@
                 }
                 return "_____";
             });
-
-            if (!matched) {
-                const simpleTarget = normalizeTargetExpression(targetWord);
-                if (simpleTarget) {
-                    const simpleRegex = new RegExp(escapeRegExp(simpleTarget), "gi");
-                    return safePhrase.replace(simpleRegex, reveal
-                        ? (match) => `<span class="text-rose-500 underline font-black font-mono">${match}</span>`
-                        : "_____");
-                }
-            }
 
             return rendered;
         }
